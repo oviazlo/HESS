@@ -7,8 +7,14 @@ import math
 from ROOT import TCanvas, TGraphAsymmErrors, TLegend, TF1, TFile
 from ROOT import gROOT
 
-#  DM_mass = 50000
-DM_mass = 48800
+################################################################################
+#  Parameters
+
+DM_mass = 50000
+#  DM_mass = 48800
+
+################################################################################
+#  Formulas
 
 def b1(M):
         return 9.29*math.pow(M,-0.0139)
@@ -50,12 +56,8 @@ def sigFunc(x,par):
 def sigAndBkg(x,par):
 	return bkgFunc(x,par) + sigFunc(x,par)
 
-
-#  bkgFunc = TF1("bkg","x*x*[0]*[0]*pow(x,-[1])",0,70000)
-#  bkgFunc.SetParameter(0,5.18*0.0001)
-#  bkgFunc.SetParameter(1,2.8)
-
-########################################
+################################################################################
+#  Helper functions
 
 def readDataIntoGraph():
 	f=open('HESSj1745_290.dat',"r")
@@ -85,7 +87,9 @@ def readDataIntoGraph():
 	gr.SetTitle('')
 	return gr
 
-########################################
+################################################################################
+################################################################################
+#  MAIN
 
 can1 = TCanvas( 'can1', 'A Simple Graph Example', 10, 10, 1810/2, 1210/2 )
 can1.SetGrid()
@@ -95,30 +99,27 @@ can1.Modified()
 can1.Update()
 can1.SetLogy()
 can1.SetLogx()
-#  can1.Divide(2,1)
 
 leg = TLegend(0.55, 0.78, 0.75, 0.88)
 leg.SetBorderSize(0)
 leg.SetTextSize(0.03)
 
-#  can1.cd(1)
 dataGraph = readDataIntoGraph()
 dataGraph.Draw("AP")
-dataGraph.GetYaxis().SetRangeUser(5.0e-12,1.0e-06)
+dataGraph.GetYaxis().SetRangeUser(5.0e-12,1.0e-08)
 dataGraph.Draw("AP")
 
 f_bkgFunc = TF1("bkg",bkgFunc,0,70000,1)
-f_bkgFunc.SetParameter(0,DM_mass) # 50 TeV
+f_bkgFunc.SetParameter(0,DM_mass)
 f_bkgFunc.Draw("same")
 
 f_sigFunc = TF1( "signalFunc", sigFunc,0,70000,1)
-f_sigFunc.SetParameter(0,DM_mass) # 50 TeV
+f_sigFunc.SetParameter(0,DM_mass)
 f_sigFunc.SetLineColor(4)
-#  print (sigFunc.Eval(0.0001))
 f_sigFunc.Draw("same")
 
 f_sigAndBkgFunc = TF1("signalAndBkg",sigAndBkg,0,70000,1)
-f_sigAndBkgFunc.SetParameter(0,DM_mass) # 50 TeV
+f_sigAndBkgFunc.SetParameter(0,DM_mass) 
 f_sigAndBkgFunc.SetLineColor(3)
 f_sigAndBkgFunc.Draw("same")
 
@@ -128,9 +129,9 @@ leg.AddEntry(f_sigFunc, 'signal', "l");
 leg.AddEntry(f_sigAndBkgFunc, 'signal fit + background', "l");
 leg.Draw("same")
 can1.SaveAs('test.png')
-can1.SaveAs('test.root')
+#  can1.SaveAs('test.root')
 
-outFile = TFile ("outFile.root","RECREATE")
-outFile.cd()
-dataGraph.Write()
+chi2 = dataGraph.Chisquare(f_sigAndBkgFunc)
+ndf = 28
+print ("Chi2: %f\tndf: %f\tchi2/ndf: %f" % (chi2, ndf, chi2/ndf))
 
